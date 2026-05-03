@@ -1,0 +1,33 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  LINT-TEST-BUILD-CHECK:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Lint (Pylint)
+        run: |
+          # Проверяем папку server, игнорируем ошибки оформления, если нужно
+          pylint server/application.py --disable=C,R
+
+      - name: Test (Pytest)
+        run: |
+          # Добавляем папку server в путь, чтобы тесты видели application.py
+          export PYTHONPATH=$PYTHONPATH:$(pwd)/server
+          pytest server/test_application.py
+
+      - name: Build Docker
+        run: |
+          docker build -t my-server ./server
